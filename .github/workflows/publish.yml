@@ -25,13 +25,13 @@ jobs:
       - run: echo ${{steps.version.outputs.prop}} 
       - name: Publish
         run: |
-          dotnet publish 'Flow.Plugin.VSCodeWorkspace.csproj' -r win-x64  -c Release -o "Flow.Plugin.VSCodeWorkspace-${{steps.version.outputs.prop}}"
-          7z a -tzip "Flow.Plugin.VSCodeWorkspace-${{steps.version.outputs.prop}}.zip" "./Flow.Plugin.VSCodeWorkspace-${{steps.version.outputs.prop}}/*"
-          rm -r "Flow.Plugin.VSCodeWorkspace-${{steps.version.outputs.prop}}"
+          dotnet publish 'Flow.Plugin.VSCodeWorkspaces.csproj' -r win-x64  -c Release -o "Flow.Plugin.VSCodeWorkspaces-${{steps.version.outputs.prop}}"
+          7z a -tzip "Flow.Plugin.VSCodeWorkspaces-${{steps.version.outputs.prop}}.zip" "./Flow.Plugin.VSCodeWorkspaces-${{steps.version.outputs.prop}}/*"
+          rm -r "Flow.Plugin.VSCodeWorkspaces-${{steps.version.outputs.prop}}"
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
-          files: "Flow.Plugin.VSCodeWorkspace*"
+          files: "Flow.Plugin.VSCodeWorkspaces*"
           tag_name: "v${{steps.version.outputs.prop}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
