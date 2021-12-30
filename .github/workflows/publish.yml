@@ -23,7 +23,7 @@ jobs:
           path: 'plugin.json'
           prop_path: 'Version'
       - run: echo ${{steps.version.outputs.prop}} 
-      - name: Build
+      - name: Publish
         run: |
           dotnet publish 'Flow.Plugin.VSCodeWorkspace.csproj' -r win-x64  -c Release -o "Flow.Plugin.VSCodeWorkspace-${{steps.version.outputs.prop}}"
           7z a -tzip "Flow.Plugin.VSCodeWorkspace-${{steps.version.outputs.prop}}.zip" "./Flow.Plugin.VSCodeWorkspace-${{steps.version.outputs.prop}}/*"
