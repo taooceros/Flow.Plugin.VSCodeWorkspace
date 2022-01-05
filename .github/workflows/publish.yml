@@ -2,8 +2,8 @@ name: Publish Release
 
 on:
   push:
-    branches: [ master ]
-    paths-ignore: 
+    branches: ["main"]
+    paths-ignore:
       - .github/workflows/*
   workflow_dispatch:
 
@@ -19,10 +19,10 @@ jobs:
       - name: get version
         id: version
         uses: notiz-dev/github-action-json-property@release
-        with: 
-          path: 'plugin.json'
-          prop_path: 'Version'
-      - run: echo ${{steps.version.outputs.prop}} 
+        with:
+          path: "plugin.json"
+          prop_path: "Version"
+      - run: echo ${{steps.version.outputs.prop}}
       - name: Publish
         run: |
           dotnet publish 'Flow.Plugin.VSCodeWorkspaces.csproj' -r win-x64  -c Release -o "Flow.Plugin.VSCodeWorkspaces-${{steps.version.outputs.prop}}"
@@ -35,4 +35,3 @@ jobs:
           tag_name: "v${{steps.version.outputs.prop}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
