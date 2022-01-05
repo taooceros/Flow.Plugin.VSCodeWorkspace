@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Flow.Plugin.VSCodeWorkspaces.VSCodeHelper;
+using Microsoft.Data.Sqlite;
 
 namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 {
@@ -71,7 +72,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                             if (vscodeStorageFile != null)
                             {
                                 // for previous versions of vscode
-                                if (vscodeStorageFile.OpenedPathsList.Workspaces3 != null)
+                                if (vscodeStorageFile.OpenedPathsList?.Workspaces3 != null)
                                 {
                                     foreach (var workspaceUri in vscodeStorageFile.OpenedPathsList.Workspaces3)
                                     {
@@ -85,7 +86,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                                 }
 
                                 // vscode v1.55.0 or later
-                                if (vscodeStorageFile.OpenedPathsList.Entries != null)
+                                if (vscodeStorageFile.OpenedPathsList?.Entries != null)
                                 {
                                     foreach (var workspaceUri in vscodeStorageFile.OpenedPathsList.Entries.Select(x => x.FolderUri))
                                     {
@@ -105,6 +106,34 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                             Main._context.API.LogException("VSCodeWorkspaceApi", message, ex);
                         }
                     }
+
+                    using var connection = new SqliteConnection($"Data Source={vscodeInstance.AppData}/User/globalStorage/state.vscdb;mode=readonly;cache=shared;");
+                    connection.Open();
+                    var command = connection.CreateCommand();
+                    command.CommandText = "SELECT value FROM ItemTable where key = 'history.recentlyOpenedPathsList'";
+                    var result = command.ExecuteScalar();
+                    if (result != null)
+                    {
+                        using var historyDoc = JsonDocument.Parse(result.ToString()!);
+                        var root = historyDoc.RootElement;
+                        if (root.TryGetProperty("entries", out var entries))
+                        {
+                            foreach (var entry in entries.EnumerateArray())
+                            {
+                                if (entry.TryGetProperty("folderUri", out var folderUri))
+                                {
+                                    var workspaceUri = folderUri.GetString();
+                                    var uri = ParseVSCodeUri(workspaceUri, vscodeInstance);
+                                    if (uri != null)
+                                    {
+                                        results.Add(uri);
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                 }
 
                 return results;
