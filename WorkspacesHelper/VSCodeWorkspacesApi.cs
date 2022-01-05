@@ -107,6 +107,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                         }
                     }
 
+                    // for vscode v1.64.0 or later
                     using var connection = new SqliteConnection($"Data Source={vscodeInstance.AppData}/User/globalStorage/state.vscdb;mode=readonly;cache=shared;");
                     connection.Open();
                     var command = connection.CreateCommand();
