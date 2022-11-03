@@ -11,6 +11,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Diagnostics;
+    using System.Globalization;
     using System.Linq;
     using System.Windows.Controls;
     using VSCodeHelper;
@@ -177,6 +178,11 @@ namespace Flow.Plugin.VSCodeWorkspaces
         }
 
         public Control CreateSettingPanel() => new SettingsView(_context, _settings);
+
+        public void OnCultureInfoChanged(CultureInfo newCulture)
+        {
+            Resources.Culture = newCulture;
+        }
 
         public string GetTranslatedPluginTitle()
         {
