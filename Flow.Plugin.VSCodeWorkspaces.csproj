@@ -59,7 +59,7 @@
 	<ItemGroup>
 		<EmbeddedResource Update="Properties\Resources.resx">
 			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
-			<Generator>ResXFileCodeGenerator</Generator>
+			<Generator>PublicResXFileCodeGenerator</Generator>
 		</EmbeddedResource>
 	</ItemGroup>
 	<ItemGroup>
