@@ -4,25 +4,30 @@
 
 namespace Flow.Plugin.VSCodeWorkspaces
 {
+    using Flow.Launcher.Plugin;
+    using Properties;
+    using RemoteMachinesHelper;
     using System;
     using System.Collections.Generic;
     using System.ComponentModel;
     using System.Diagnostics;
+    using System.Globalization;
     using System.Linq;
-    using Flow.Launcher.Plugin;
-    using Properties;
-    using RemoteMachinesHelper;
+    using System.Windows.Controls;
     using VSCodeHelper;
     using WorkspacesHelper;
 
-    public class Main : IPlugin, IPluginI18n
+    public class Main : IPlugin, IPluginI18n, ISettingProvider
     {
         internal static PluginInitContext _context { get; private set; }
+
+        private static Settings _settings;
 
         public string Name => GetTranslatedPluginTitle();
 
         public string Description => GetTranslatedPluginDescription();
 
+        private VSCodeInstance defaultInstalce = null;
 
         private readonly VSCodeWorkspacesApi _workspacesApi = new VSCodeWorkspacesApi();
 
@@ -31,104 +36,75 @@ namespace Flow.Plugin.VSCodeWorkspaces
         public List<Result> Query(Query query)
         {
             var results = new List<Result>();
+            var workspaces = new List<VSCodeWorkspace>();
+
+            // User defined extra workspaces
+            if (defaultInstalce != null)
+            {
+                workspaces.AddRange(_settings.CustomWorkspaces.Select(uri => VSCodeWorkspacesApi.ParseVSCodeUri(uri, defaultInstalce)));
+            }
 
             // Search opened workspaces
-            _workspacesApi.Workspaces.ForEach(a =>
+            if (_settings.DiscoverWorkspaces)
             {
-                var title = $"{a.FolderName}";
+                workspaces.AddRange(_workspacesApi.Workspaces);
+            }
 
-                var typeWorkspace = a.WorkspaceTypeToString();
-                if (a.TypeWorkspace != TypeWorkspace.Local)
-                {
-                    title = $"{title}{(a.ExtraInfo != null ? $" - {a.ExtraInfo}" : string.Empty)} ({typeWorkspace})";
-                }
-
-                var tooltip = $"{Resources.Workspace}{(a.TypeWorkspace != TypeWorkspace.Local ? $" {Resources.In} {typeWorkspace}" : string.Empty)}: {SystemPath.RealPath(a.RelativePath)}";
-
-                results.Add(new Result
-                {
-                    Title = title,
-                    SubTitle = $"{Resources.Workspace}{(a.TypeWorkspace != TypeWorkspace.Local ? $" {Resources.In} {typeWorkspace}" : string.Empty)}: {SystemPath.RealPath(a.RelativePath)}",
-                    Icon = a.VSCodeInstance.WorkspaceIcon,
-                    TitleToolTip = tooltip,
-                    Action = c =>
-                    {
-                        bool hide;
-                        try
-                        {
-                            var process = new ProcessStartInfo
-                            {
-                                FileName = a.VSCodeInstance.ExecutablePath,
-                                UseShellExecute = true,
-                                Arguments = $"--folder-uri {a.Path}",
-                                WindowStyle = ProcessWindowStyle.Hidden,
-                            };
-                            Process.Start(process);
-
-                            hide = true;
-                        }
-                        catch (Win32Exception)
-                        {
-                            var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
-                            var msg = "Can't Open this file";
-                            _context.API.ShowMsg(name, msg, string.Empty);
-                            hide = false;
-                        }
-
-                        return hide;
-                    },
-                    ContextData = a,
-                });
-            });
+            // Simple de-duplication
+            results
+                .AddRange(workspaces.GroupBy(x => new { Path = Uri.UnescapeDataString(x.Path).ToLower(), x.VSCodeInstance })
+                .Select(y => CreateWorkspaceResult(y.First())));
 
             // Search opened remote machines
-            _machinesApi.Machines.ForEach(a =>
+            if (_settings.DiscoverMachines)
             {
-                var title = $"{a.Host}";
-
-                if (a.User != null && a.User != string.Empty && a.HostName != null && a.HostName != string.Empty)
+                _machinesApi.Machines.ForEach(a =>
                 {
-                    title += $" [{a.User}@{a.HostName}]";
-                }
+                    var title = $"{a.Host}";
 
-                var tooltip = Resources.SSHRemoteMachine;
-
-                results.Add(new Result
-                {
-                    Title = title,
-                    SubTitle = Resources.SSHRemoteMachine,
-                    Icon = a.VSCodeInstance.RemoteIcon,
-                    TitleToolTip = tooltip,
-                    Action = c =>
+                    if (a.User != null && a.User != string.Empty && a.HostName != null && a.HostName != string.Empty)
                     {
-                        bool hide;
-                        try
+                        title += $" [{a.User}@{a.HostName}]";
+                    }
+
+                    var tooltip = Resources.SSHRemoteMachine;
+
+                    results.Add(new Result
+                    {
+                        Title = title,
+                        SubTitle = Resources.SSHRemoteMachine,
+                        Icon = a.VSCodeInstance.RemoteIcon,
+                        TitleToolTip = tooltip,
+                        Action = c =>
                         {
-                            var process = new ProcessStartInfo
+                            bool hide;
+                            try
                             {
-                                FileName = a.VSCodeInstance.ExecutablePath,
-                                UseShellExecute = true,
-                                Arguments = $"--new-window --enable-proposed-api ms-vscode-remote.remote-ssh --remote ssh-remote+{((char)34) + a.Host + ((char)34)}",
-                                WindowStyle = ProcessWindowStyle.Hidden,
-                            };
-                            Process.Start(process);
+                                var process = new ProcessStartInfo
+                                {
+                                    FileName = a.VSCodeInstance.ExecutablePath,
+                                    UseShellExecute = true,
+                                    Arguments = $"--new-window --enable-proposed-api ms-vscode-remote.remote-ssh --remote ssh-remote+{((char)34) + a.Host + ((char)34)}",
+                                    WindowStyle = ProcessWindowStyle.Hidden,
+                                };
+                                Process.Start(process);
 
-                            hide = true;
-                        }
-                        catch (Win32Exception)
-                        {
-                            var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
-                            const string msg = "Can't Open this file";
-                            _context.API.ShowMsg(name, msg, string.Empty);
-                            hide = false;
-                        }
+                                hide = true;
+                            }
+                            catch (Win32Exception)
+                            {
+                                var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
+                                const string msg = "Can't Open this file";
+                                _context.API.ShowMsg(name, msg, string.Empty);
+                                hide = false;
+                            }
 
-                        return hide;
-                    },
-                    ContextData = a,
+                            return hide;
+                        },
+                        ContextData = a,
+                    });
                 });
-            });
-
+            }
 
             if (query.ActionKeyword == string.Empty || (query.ActionKeyword != string.Empty && query.Search != string.Empty))
             {
@@ -143,11 +119,69 @@ namespace Flow.Plugin.VSCodeWorkspaces
             return results;
         }
 
+        public Result CreateWorkspaceResult(VSCodeWorkspace ws)
+        {
+            var title = $"{ws.FolderName}";
+            var typeWorkspace = ws.WorkspaceTypeToString();
+
+            if (ws.TypeWorkspace != TypeWorkspace.Local)
+            {
+                title = $"{title}{(ws.ExtraInfo != null ? $" - {ws.ExtraInfo}" : string.Empty)} ({typeWorkspace})";
+            }
+
+            var tooltip = $"{Resources.Workspace}{(ws.TypeWorkspace != TypeWorkspace.Local ? $" {Resources.In} {typeWorkspace}" : string.Empty)}: {SystemPath.RealPath(ws.RelativePath)}";
+
+            return new Result
+            {
+                Title = title,
+                SubTitle = tooltip,
+                Icon = ws.VSCodeInstance.WorkspaceIcon,
+                TitleToolTip = tooltip,
+                Action = c =>
+                {
+                    try
+                    {
+                        var process = new ProcessStartInfo
+                        {
+                            FileName = ws.VSCodeInstance.ExecutablePath,
+                            UseShellExecute = true,
+                            WindowStyle = ProcessWindowStyle.Hidden,
+                        };
+                        process.ArgumentList.Add("--folder-uri");
+                        process.ArgumentList.Add(ws.Path);
+
+                        Process.Start(process);
+                        return true;
+                    }
+                    catch (Win32Exception)
+                    {
+                        var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
+                        var msg = "Can't Open this file";
+                        _context.API.ShowMsg(name, msg, string.Empty);
+                    }
+                    return false;
+                },
+                ContextData = ws,
+            };
+        }
+
         public void Init(PluginInitContext context)
         {
             _context = context;
+            _settings = context.API.LoadSettingJsonStorage<Settings>();
+
             VSCodeInstances.LoadVSCodeInstances();
 
+            // Prefer stable version, or the first one we got
+            defaultInstalce = VSCodeInstances.Instances.Find(e => e.VSCodeVersion == VSCodeVersion.Stable) ??
+                VSCodeInstances.Instances.FirstOrDefault();
+        }
+
+        public Control CreateSettingPanel() => new SettingsView(_context, _settings);
+
+        public void OnCultureInfoChanged(CultureInfo newCulture)
+        {
+            Resources.Culture = newCulture;
         }
 
         public string GetTranslatedPluginTitle()

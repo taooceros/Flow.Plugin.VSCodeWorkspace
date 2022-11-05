@@ -140,10 +140,31 @@
   </data>
   <data name="Workspace" xml:space="preserve">
     <value>Workspace</value>
-    <comment>It refers to the "Visual Studio Code  workspace"</comment>
+    <comment>It refers to the "Visual Studio Code workspace"</comment>
   </data>
   <data name="TypeWorkspaceDevContainer" xml:space="preserve">
     <value>Dev Container</value>
     <comment>As in "Visual Studio Code Dev Container workspace "</comment>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="DiscoverMachines" xml:space="preserve">
+    <value>Discover Remote Machines</value>
+  </data>
+  <data name="DiscoverMachinesTooltip" xml:space="preserve">
+    <value>Automatically discover remote machines configured in settings.json.</value>
+  </data>
+  <data name="DiscoverWorkspaces" xml:space="preserve">
+    <value>Discover Workspaces</value>
+  </data>
+  <data name="DiscoverWorkspacesTooltip" xml:space="preserve">
+    <value>Automatically discover workspaces (folders) from recent opened list of VSCode.</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="ExtraFolderUri" xml:space="preserve">
+    <value>Extra Folder URI</value>
   </data>
 </root>

@@ -117,11 +117,32 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Add" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="DiscoverMachines" xml:space="preserve">
+    <value>自动发现远程计算机</value>
+  </data>
+  <data name="DiscoverMachinesTooltip" xml:space="preserve">
+    <value>从 settings.json 中读取配置好的远程计算机连接</value>
+  </data>
+  <data name="DiscoverWorkspaces" xml:space="preserve">
+    <value>自动发现工作区</value>
+  </data>
+  <data name="DiscoverWorkspacesTooltip" xml:space="preserve">
+    <value>从 VSCode 最近打开列表中读取工作区 (文件夹)</value>
+  </data>
+  <data name="ExtraFolderUri" xml:space="preserve">
+    <value>额外的文件夹 URI</value>
+  </data>
   <data name="In" xml:space="preserve">
-    <value>含于</value>
+    <value>位于</value>
   </data>
   <data name="PluginDescription" xml:space="preserve">
-    <value>打开以前在 VS Code 中打开的工作区、远程计算机(SSH 或 Codespaces)和容器。</value>
+    <value>在 VS Code 中打开最近使用的工作区、远程计算机(SSH 或 Codespaces)和容器。</value>
   </data>
   <data name="PluginTitle" xml:space="preserve">
     <value>Visual Studio Code 工作区</value>
@@ -131,6 +152,9 @@
   </data>
   <data name="TypeWorkspaceContainer" xml:space="preserve">
     <value>容器</value>
+  </data>
+  <data name="TypeWorkspaceDevContainer" xml:space="preserve">
+    <value>开发容器</value>
   </data>
   <data name="TypeWorkspaceLocal" xml:space="preserve">
     <value>本地</value>

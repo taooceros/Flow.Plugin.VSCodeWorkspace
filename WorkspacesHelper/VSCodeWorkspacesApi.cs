@@ -18,7 +18,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
         {
         }
 
-        private VSCodeWorkspace ParseVSCodeUri(string uri, VSCodeInstance vscodeInstance)
+        public static VSCodeWorkspace ParseVSCodeUri(string uri, VSCodeInstance vscodeInstance)
         {
             if (uri != null && uri is string)
             {
