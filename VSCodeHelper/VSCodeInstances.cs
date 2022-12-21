@@ -67,15 +67,21 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
                 Instances = new List<VSCodeInstance>();
 
                 _systemPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-                var paths = _systemPath.Split(";");
-                paths = paths.Where(x => x.Contains("VS Code")).Distinct().ToArray();
+                var paths = _systemPath.Split(";").Where(x =>
+                    x.Contains("VS Code", StringComparison.OrdinalIgnoreCase) ||
+                    x.Contains("VSCodium", StringComparison.OrdinalIgnoreCase) ||
+                    x.Contains("vscode", StringComparison.OrdinalIgnoreCase));
                 foreach (var path in paths)
                 {
                     if (Directory.Exists(path))
                     {
                         var files = Directory.GetFiles(path);
                         var iconPath = Path.GetDirectoryName(path);
-                        files = files.Where(x => x.Contains("code") && !x.EndsWith(".cmd")).ToArray();
+                        files = files.Where(x =>
+                            (x.Contains("code", StringComparison.OrdinalIgnoreCase) ||
+                             x.Contains("VSCodium", StringComparison.OrdinalIgnoreCase))
+                            && !x.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)).ToArray();
+
 
                         if (files.Length > 0)
                         {
@@ -105,17 +111,18 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
 
                             if (version != string.Empty)
                             {
-                                instance.AppData = Path.Combine(_userAppDataPath, version);
+                                var portableData = Path.Join(iconPath, "data");
+                                instance.AppData = Directory.Exists(portableData) ? Path.Join(portableData, "user-data") : Path.Combine(_userAppDataPath, version);
                                 var iconVSCode = Path.Join(iconPath, $"{version}.exe");
 
                                 var bitmapIconVscode = Icon.ExtractAssociatedIcon(iconVSCode)?.ToBitmap();
 
                                 // workspace
-                                var folderIcon = (Bitmap)System.Drawing.Image.FromFile(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "//Images//folder.png");
+                                var folderIcon = (Bitmap)Image.FromFile(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "//Images//folder.png");
                                 instance.WorkspaceIconBitMap = Bitmap2BitmapImage(BitmapOverlayToCenter(folderIcon, bitmapIconVscode));
 
                                 // remote
-                                var monitorIcon = (Bitmap)System.Drawing.Image.FromFile(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "//Images//monitor.png");
+                                var monitorIcon = (Bitmap)Image.FromFile(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "//Images//monitor.png");
 
                                 instance.RemoteIconBitMap = Bitmap2BitmapImage(BitmapOverlayToCenter(monitorIcon, bitmapIconVscode));
 
