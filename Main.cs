@@ -27,11 +27,11 @@ namespace Flow.Plugin.VSCodeWorkspaces
 
         public string Description => GetTranslatedPluginDescription();
 
-        private VSCodeInstance defaultInstalce = null;
+        private VSCodeInstance defaultInstalce;
 
-        private readonly VSCodeWorkspacesApi _workspacesApi = new VSCodeWorkspacesApi();
+        private readonly VSCodeWorkspacesApi _workspacesApi = new();
 
-        private readonly VSCodeRemoteMachinesApi _machinesApi = new VSCodeRemoteMachinesApi();
+        private readonly VSCodeRemoteMachinesApi _machinesApi = new();
 
         public List<Result> Query(Query query)
         {
@@ -51,9 +51,9 @@ namespace Flow.Plugin.VSCodeWorkspaces
             }
 
             // Simple de-duplication
-            results
-                .AddRange(workspaces.GroupBy(x => new { Path = Uri.UnescapeDataString(x.Path).ToLower(), x.VSCodeInstance })
-                .Select(y => CreateWorkspaceResult(y.First())));
+            results.AddRange(workspaces.Distinct()
+                .Select(CreateWorkspaceResult)
+            );
 
             // Search opened remote machines
             if (_settings.DiscoverMachines)
@@ -62,7 +62,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
                 {
                     var title = $"{a.Host}";
 
-                    if (a.User != null && a.User != string.Empty && a.HostName != null && a.HostName != string.Empty)
+                    if (!string.IsNullOrEmpty(a.User) && !string.IsNullOrEmpty(a.HostName))
                     {
                         title += $" [{a.User}@{a.HostName}]";
                     }
@@ -119,7 +119,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
             return results;
         }
 
-        public Result CreateWorkspaceResult(VSCodeWorkspace ws)
+        private Result CreateWorkspaceResult(VSCodeWorkspace ws)
         {
             var title = $"{ws.FolderName}";
             var typeWorkspace = ws.WorkspaceTypeToString();
@@ -156,7 +156,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
                     catch (Win32Exception)
                     {
                         var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
-                        var msg = "Can't Open this file";
+                        const string msg = "Can't Open this file";
                         _context.API.ShowMsg(name, msg, string.Empty);
                     }
                     return false;
@@ -174,7 +174,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
 
             // Prefer stable version, or the first one we got
             defaultInstalce = VSCodeInstances.Instances.Find(e => e.VSCodeVersion == VSCodeVersion.Stable) ??
-                VSCodeInstances.Instances.FirstOrDefault();
+                              VSCodeInstances.Instances.FirstOrDefault();
         }
 
         public Control CreateSettingPanel() => new SettingsView(_context, _settings);

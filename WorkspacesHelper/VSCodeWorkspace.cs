@@ -2,38 +2,39 @@
 // The Microsoft Corporation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using Flow.Plugin.VSCodeWorkspaces.Properties;
 using Flow.Plugin.VSCodeWorkspaces.VSCodeHelper;
 
 namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 {
-    public class VSCodeWorkspace
+    public record VSCodeWorkspace
     {
-        public string Path { get; set; }
+        public string Path { get; init; }
 
-        public string RelativePath { get; set; }
+        public string RelativePath { get; init; }
 
-        public string FolderName { get; set; }
+        public string FolderName { get; init; }
 
-        public string ExtraInfo { get; set; }
+        public string ExtraInfo { get; init; }
 
-        public TypeWorkspace TypeWorkspace { get; set; }
+        public TypeWorkspace TypeWorkspace { get; init; }
 
-        public VSCodeInstance VSCodeInstance { get; set; }
+        public VSCodeInstance VSCodeInstance { get; init; }
 
         public string WorkspaceTypeToString()
         {
-            switch (TypeWorkspace)
+            return TypeWorkspace switch
             {
-                case TypeWorkspace.Local: return Resources.TypeWorkspaceLocal;
-                case TypeWorkspace.Codespaces: return "Codespaces";
-                case TypeWorkspace.RemoteContainers: return Resources.TypeWorkspaceContainer;
-                case TypeWorkspace.RemoteSSH: return "SSH";
-                case TypeWorkspace.RemoteWSL: return "WSL";
-                case TypeWorkspace.DevContainer: return Resources.TypeWorkspaceDevContainer;
-            }
+                TypeWorkspace.Local => Resources.TypeWorkspaceLocal,
+                TypeWorkspace.Codespaces => "Codespaces",
+                TypeWorkspace.RemoteContainers => Resources.TypeWorkspaceContainer,
+                TypeWorkspace.RemoteSSH => "SSH",
+                TypeWorkspace.RemoteWSL => "WSL",
+                TypeWorkspace.DevContainer => Resources.TypeWorkspaceDevContainer,
+                _ => string.Empty
+            };
 
-            return string.Empty;
         }
     }
 

@@ -17,9 +17,9 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
     {
         private static string _systemPath = string.Empty;
 
-        private static string _userAppDataPath = Environment.GetEnvironmentVariable("AppData");
+        private static readonly string _userAppDataPath = Environment.GetEnvironmentVariable("AppData");
 
-        public static List<VSCodeInstance> Instances { get; set; } = new List<VSCodeInstance>();
+        public static List<VSCodeInstance> Instances { get; set; } = new();
 
         private static BitmapImage Bitmap2BitmapImage(Bitmap bitmap)
         {
@@ -39,7 +39,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
             }
         }
 
-        public static Bitmap BitmapOverlayToCenter(Bitmap bitmap1, Bitmap overlayBitmap)
+        private static Bitmap BitmapOverlayToCenter(Bitmap bitmap1, Bitmap overlayBitmap)
         {
             int bitmap1Width = bitmap1.Width;
             int bitmap1Height = bitmap1.Height;
@@ -62,75 +62,76 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
         // Gets the executablePath and AppData foreach instance of VSCode
         public static void LoadVSCodeInstances()
         {
-            if (_systemPath != Environment.GetEnvironmentVariable("PATH"))
+            if (_systemPath == Environment.GetEnvironmentVariable("PATH"))
+                return;
+            
+            
+            Instances = new List<VSCodeInstance>();
+
+            _systemPath = Environment.GetEnvironmentVariable("PATH") ?? "";
+            var paths = _systemPath.Split(";").Where(x =>
+                x.Contains("VS Code", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("VSCodium", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("vscode", StringComparison.OrdinalIgnoreCase));
+            foreach (var path in paths)
             {
-                Instances = new List<VSCodeInstance>();
+                if (!Directory.Exists(path))
+                    continue;
+                
+                var files = Directory.EnumerateFiles(path).Where(x =>
+                    (x.Contains("code", StringComparison.OrdinalIgnoreCase) ||
+                     x.Contains("VSCodium", StringComparison.OrdinalIgnoreCase))
+                    && !x.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)).ToArray();
 
-                _systemPath = Environment.GetEnvironmentVariable("PATH") ?? "";
-                var paths = _systemPath.Split(";").Where(x =>
-                    x.Contains("VS Code", StringComparison.OrdinalIgnoreCase) ||
-                    x.Contains("VSCodium", StringComparison.OrdinalIgnoreCase) ||
-                    x.Contains("vscode", StringComparison.OrdinalIgnoreCase));
-                foreach (var path in paths)
+                var iconPath = Path.GetDirectoryName(path);
+
+                if (files.Length <= 0)
+                    continue;
+                        
+                var file = files[0];
+                var version = string.Empty;
+
+                var instance = new VSCodeInstance
                 {
-                    if (Directory.Exists(path))
-                    {
-                        var files = Directory.GetFiles(path);
-                        var iconPath = Path.GetDirectoryName(path);
-                        files = files.Where(x =>
-                            (x.Contains("code", StringComparison.OrdinalIgnoreCase) ||
-                             x.Contains("VSCodium", StringComparison.OrdinalIgnoreCase))
-                            && !x.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)).ToArray();
+                    ExecutablePath = file,
+                };
 
-
-                        if (files.Length > 0)
-                        {
-                            var file = files[0];
-                            var version = string.Empty;
-
-                            var instance = new VSCodeInstance
-                            {
-                                ExecutablePath = file,
-                            };
-
-                            if (file.EndsWith("code"))
-                            {
-                                version = "Code";
-                                instance.VSCodeVersion = VSCodeVersion.Stable;
-                            }
-                            else if (file.EndsWith("code-insiders"))
-                            {
-                                version = "Code - Insiders";
-                                instance.VSCodeVersion = VSCodeVersion.Insiders;
-                            }
-                            else if (file.EndsWith("code-exploration"))
-                            {
-                                version = "Code - Exploration";
-                                instance.VSCodeVersion = VSCodeVersion.Exploration;
-                            }
-
-                            if (version != string.Empty)
-                            {
-                                var portableData = Path.Join(iconPath, "data");
-                                instance.AppData = Directory.Exists(portableData) ? Path.Join(portableData, "user-data") : Path.Combine(_userAppDataPath, version);
-                                var iconVSCode = Path.Join(iconPath, $"{version}.exe");
-
-                                var bitmapIconVscode = Icon.ExtractAssociatedIcon(iconVSCode)?.ToBitmap();
-
-                                // workspace
-                                var folderIcon = (Bitmap)Image.FromFile(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "//Images//folder.png");
-                                instance.WorkspaceIconBitMap = Bitmap2BitmapImage(BitmapOverlayToCenter(folderIcon, bitmapIconVscode));
-
-                                // remote
-                                var monitorIcon = (Bitmap)Image.FromFile(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "//Images//monitor.png");
-
-                                instance.RemoteIconBitMap = Bitmap2BitmapImage(BitmapOverlayToCenter(monitorIcon, bitmapIconVscode));
-
-                                Instances.Add(instance);
-                            }
-                        }
-                    }
+                if (file.EndsWith("code"))
+                {
+                    version = "Code";
+                    instance.VSCodeVersion = VSCodeVersion.Stable;
                 }
+                else if (file.EndsWith("code-insiders"))
+                {
+                    version = "Code - Insiders";
+                    instance.VSCodeVersion = VSCodeVersion.Insiders;
+                }
+                else if (file.EndsWith("code-exploration"))
+                {
+                    version = "Code - Exploration";
+                    instance.VSCodeVersion = VSCodeVersion.Exploration;
+                }
+
+                if (version == string.Empty)
+                    continue;
+                        
+                        
+                var portableData = Path.Join(iconPath, "data");
+                instance.AppData = Directory.Exists(portableData) ? Path.Join(portableData, "user-data") : Path.Combine(_userAppDataPath, version);
+                var iconVSCode = Path.Join(iconPath, $"{version}.exe");
+
+                var bitmapIconVscode = Icon.ExtractAssociatedIcon(iconVSCode)?.ToBitmap();
+
+                // workspace
+                var folderIcon = (Bitmap)Image.FromFile(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "//Images//folder.png");
+                instance.WorkspaceIconBitMap = Bitmap2BitmapImage(BitmapOverlayToCenter(folderIcon, bitmapIconVscode));
+
+                // remote
+                var monitorIcon = (Bitmap)Image.FromFile(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "//Images//monitor.png");
+
+                instance.RemoteIconBitMap = Bitmap2BitmapImage(BitmapOverlayToCenter(monitorIcon, bitmapIconVscode));
+
+                Instances.Add(instance);
             }
         }
     }

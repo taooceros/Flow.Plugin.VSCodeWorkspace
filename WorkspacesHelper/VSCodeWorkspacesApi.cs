@@ -59,50 +59,41 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                 foreach (var vscodeInstance in VSCodeInstances.Instances)
                 {
                     // storage.json contains opened Workspaces
-                    var vscode_storage = Path.Combine(vscodeInstance.AppData, "storage.json");
+                    var vscodeStorage = Path.Combine(vscodeInstance.AppData, "storage.json");
 
-                    if (File.Exists(vscode_storage))
+                    if (File.Exists(vscodeStorage))
                     {
-                        var fileContent = File.ReadAllText(vscode_storage);
+                        var fileContent = File.ReadAllText(vscodeStorage);
 
                         try
                         {
-                            VSCodeStorageFile vscodeStorageFile = JsonSerializer.Deserialize<VSCodeStorageFile>(fileContent);
+                            var vscodeStorageFile = JsonSerializer.Deserialize<VSCodeStorageFile>(fileContent);
 
                             if (vscodeStorageFile != null)
                             {
                                 // for previous versions of vscode
                                 if (vscodeStorageFile.OpenedPathsList?.Workspaces3 != null)
                                 {
-                                    foreach (var workspaceUri in vscodeStorageFile.OpenedPathsList.Workspaces3)
-                                    {
-                                        var uri = ParseVSCodeUri(workspaceUri, vscodeInstance);
-                                        if (uri != null)
-                                        {
-                                            results.Add(uri);
-                                            continue;
-                                        }
-                                    }
+                                    results.AddRange(
+                                        vscodeStorageFile.OpenedPathsList.Workspaces3
+                                            .Select(workspaceUri => ParseVSCodeUri(workspaceUri, vscodeInstance))
+                                            .Where(uri => uri != null)
+                                            .Select(uri => (VSCodeWorkspace)uri));
                                 }
 
                                 // vscode v1.55.0 or later
                                 if (vscodeStorageFile.OpenedPathsList?.Entries != null)
                                 {
-                                    foreach (var workspaceUri in vscodeStorageFile.OpenedPathsList.Entries.Select(x => x.FolderUri))
-                                    {
-                                        var uri = ParseVSCodeUri(workspaceUri, vscodeInstance);
-                                        if (uri != null)
-                                        {
-                                            results.Add(uri);
-                                            continue;
-                                        }
-                                    }
+                                    results.AddRange(vscodeStorageFile.OpenedPathsList.Entries
+                                        .Select(x => x.FolderUri)
+                                        .Select(workspaceUri => ParseVSCodeUri(workspaceUri, vscodeInstance))
+                                        .Where(uri => uri != null));
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            var message = $"Failed to deserialize ${vscode_storage}";
+                            var message = $"Failed to deserialize ${vscodeStorage}";
                             Main._context.API.LogException("VSCodeWorkspaceApi", message, ex);
                         }
                     }
@@ -117,21 +108,17 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                     {
                         using var historyDoc = JsonDocument.Parse(result.ToString()!);
                         var root = historyDoc.RootElement;
-                        if (root.TryGetProperty("entries", out var entries))
+                        if (!root.TryGetProperty("entries", out var entries))
+                            continue;
+                        foreach (var entry in entries.EnumerateArray())
                         {
-                            foreach (var entry in entries.EnumerateArray())
-                            {
-                                if (entry.TryGetProperty("folderUri", out var folderUri))
-                                {
-                                    var workspaceUri = folderUri.GetString();
-                                    var uri = ParseVSCodeUri(workspaceUri, vscodeInstance);
-                                    if (uri != null)
-                                    {
-                                        results.Add(uri);
-                                        continue;
-                                    }
-                                }
-                            }
+                            if (!entry.TryGetProperty("folderUri", out var folderUri))
+                                continue;
+                            var workspaceUri = folderUri.GetString();
+                            var uri = ParseVSCodeUri(workspaceUri, vscodeInstance);
+                            if (uri == null)
+                                continue;
+                            results.Add(uri);
                         }
                     }
 
