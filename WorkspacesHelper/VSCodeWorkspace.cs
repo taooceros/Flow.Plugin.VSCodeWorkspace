@@ -10,11 +10,11 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 {
     public record VSCodeWorkspace
     {
-        public string Path { get; init; }
+        public PathString Path { get; init; }
 
-        public string RelativePath { get; init; }
+        public PathString RelativePath { get; init; }
 
-        public string FolderName { get; init; }
+        public PathString FolderName { get; init; }
 
         public string ExtraInfo { get; init; }
 
@@ -34,7 +34,6 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                 TypeWorkspace.DevContainer => Resources.TypeWorkspaceDevContainer,
                 _ => string.Empty
             };
-
         }
     }
 

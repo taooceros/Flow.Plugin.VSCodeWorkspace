@@ -37,7 +37,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
                     return new VSCodeWorkspace()
                     {
-                        Path = uri,
+                        Path = unescapeUri,
                         RelativePath = typeWorkspace.Path,
                         FolderName = folderName,
                         ExtraInfo = typeWorkspace.MachineName,
