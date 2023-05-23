@@ -17,7 +17,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
     using VSCodeHelper;
     using WorkspacesHelper;
 
-    public class Main : IPlugin, IPluginI18n, ISettingProvider
+    public class Main : IPlugin, IPluginI18n, ISettingProvider, IContextMenu
     {
         internal static PluginInitContext _context { get; private set; }
 
@@ -192,6 +192,28 @@ namespace Flow.Plugin.VSCodeWorkspaces
         public string GetTranslatedPluginDescription()
         {
             return Resources.PluginDescription;
+        }
+
+        public List<Result> LoadContextMenus(Result selectedResult)
+        {
+            List<Result> results = new();
+            if (selectedResult.ContextData is VSCodeWorkspace ws && ws.TypeWorkspace == TypeWorkspace.Local)
+            {
+                results.Add(new Result
+                {
+                    Title = Resources.OpenFolder,
+                    SubTitle = Resources.OpenFolderSubTitle,
+                    Icon = ws.VSCodeInstance.WorkspaceIcon,
+                    TitleToolTip = Resources.OpenFolderSubTitle,
+                    Action = c =>
+                    {
+                        _context.API.OpenDirectory(SystemPath.RealPath(ws.RelativePath));
+                        return true;
+                    },
+                    ContextData = ws,
+                });
+            }
+            return results;
         }
     }
 }

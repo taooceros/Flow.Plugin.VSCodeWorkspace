@@ -133,6 +133,24 @@ namespace Flow.Plugin.VSCodeWorkspaces.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Open Folder 的本地化字符串。
+        /// </summary>
+        public static string OpenFolder {
+            get {
+                return ResourceManager.GetString("OpenFolder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 Open folder in default file manager 的本地化字符串。
+        /// </summary>
+        public static string OpenFolderSubTitle {
+            get {
+                return ResourceManager.GetString("OpenFolderSubTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Opens workspaces, remote machines (SSH or Codespaces) and containers, previously opened in VS Code. 的本地化字符串。
         /// </summary>
         public static string PluginDescription {

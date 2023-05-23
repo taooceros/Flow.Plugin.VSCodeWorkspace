@@ -167,4 +167,10 @@
   <data name="ExtraFolderUri" xml:space="preserve">
     <value>Extra Folder URI</value>
   </data>
+  <data name="OpenFolder" xml:space="preserve">
+    <value>Open Folder</value>
+  </data>
+  <data name="OpenFolderSubTitle" xml:space="preserve">
+    <value>Open folder in default file manager</value>
+  </data>
 </root>
