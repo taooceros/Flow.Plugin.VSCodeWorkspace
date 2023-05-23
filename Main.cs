@@ -93,8 +93,8 @@ namespace Flow.Plugin.VSCodeWorkspaces
                             }
                             catch (Win32Exception)
                             {
-                                var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
-                                const string msg = "Can't Open this file";
+                                var name = $"{_context.CurrentPluginMetadata.Name}";
+                                string msg = Resources.OpenFail;
                                 _context.API.ShowMsg(name, msg, string.Empty);
                                 hide = false;
                             }
@@ -141,6 +141,13 @@ namespace Flow.Plugin.VSCodeWorkspaces
                 {
                     try
                     {
+                        var modifierKeys = c.SpecialKeyState.ToModifierKeys();
+                        if (modifierKeys == System.Windows.Input.ModifierKeys.Control)
+                        {
+                            _context.API.OpenDirectory(SystemPath.RealPath(ws.RelativePath));
+                            return true;
+                        }
+
                         var process = new ProcessStartInfo
                         {
                             FileName = ws.VSCodeInstance.ExecutablePath,
@@ -155,8 +162,8 @@ namespace Flow.Plugin.VSCodeWorkspaces
                     }
                     catch (Win32Exception)
                     {
-                        var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
-                        const string msg = "Can't Open this file";
+                        var name = $"{_context.CurrentPluginMetadata.Name}";
+                        string msg = Resources.OpenFail;
                         _context.API.ShowMsg(name, msg, string.Empty);
                     }
                     return false;

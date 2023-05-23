@@ -133,6 +133,15 @@ namespace Flow.Plugin.VSCodeWorkspaces.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Can&apos;t open this workspace 的本地化字符串。
+        /// </summary>
+        public static string OpenFail {
+            get {
+                return ResourceManager.GetString("OpenFail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 Open Folder 的本地化字符串。
         /// </summary>
         public static string OpenFolder {

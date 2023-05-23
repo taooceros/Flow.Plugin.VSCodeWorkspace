@@ -167,6 +167,9 @@
   <data name="ExtraFolderUri" xml:space="preserve">
     <value>Extra Folder URI</value>
   </data>
+  <data name="OpenFail" xml:space="preserve">
+    <value>Can't open this workspace</value>
+  </data>
   <data name="OpenFolder" xml:space="preserve">
     <value>Open Folder</value>
   </data>
