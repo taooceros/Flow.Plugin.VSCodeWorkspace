@@ -71,7 +71,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
             _systemPath = Environment.GetEnvironmentVariable("PATH") ?? "";
             var paths = _systemPath.Split(";").Where(x =>
                 x.Contains("VS Code", StringComparison.OrdinalIgnoreCase) ||
-                x.Contains("VSCodium", StringComparison.OrdinalIgnoreCase) ||
+                x.Contains("codium", StringComparison.OrdinalIgnoreCase) ||
                 x.Contains("vscode", StringComparison.OrdinalIgnoreCase));
             foreach (var path in paths)
             {
@@ -80,7 +80,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
                 
                 var files = Directory.EnumerateFiles(path).Where(x =>
                     (x.Contains("code", StringComparison.OrdinalIgnoreCase) ||
-                     x.Contains("VSCodium", StringComparison.OrdinalIgnoreCase))
+                     x.Contains("codium", StringComparison.OrdinalIgnoreCase))
                     && !x.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)).ToArray();
 
                 var iconPath = Path.GetDirectoryName(path);
@@ -110,6 +110,11 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
                 {
                     version = "Code - Exploration";
                     instance.VSCodeVersion = VSCodeVersion.Exploration;
+                }
+                else if (file.EndsWith("codium"))
+                {
+                    version = "VSCodium";
+                    instance.VSCodeVersion = VSCodeVersion.Stable;
                 }
 
                 if (version == string.Empty)
