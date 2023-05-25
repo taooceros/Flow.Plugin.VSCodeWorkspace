@@ -17,7 +17,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
     using VSCodeHelper;
     using WorkspacesHelper;
 
-    public class Main : IPlugin, IPluginI18n, ISettingProvider
+    public class Main : IPlugin, IPluginI18n, ISettingProvider, IContextMenu
     {
         internal static PluginInitContext _context { get; private set; }
 
@@ -93,8 +93,8 @@ namespace Flow.Plugin.VSCodeWorkspaces
                             }
                             catch (Win32Exception)
                             {
-                                var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
-                                const string msg = "Can't Open this file";
+                                var name = $"{_context.CurrentPluginMetadata.Name}";
+                                string msg = Resources.OpenFail;
                                 _context.API.ShowMsg(name, msg, string.Empty);
                                 hide = false;
                             }
@@ -141,6 +141,13 @@ namespace Flow.Plugin.VSCodeWorkspaces
                 {
                     try
                     {
+                        var modifierKeys = c.SpecialKeyState.ToModifierKeys();
+                        if (modifierKeys == System.Windows.Input.ModifierKeys.Control)
+                        {
+                            _context.API.OpenDirectory(SystemPath.RealPath(ws.RelativePath));
+                            return true;
+                        }
+
                         var process = new ProcessStartInfo
                         {
                             FileName = ws.VSCodeInstance.ExecutablePath,
@@ -155,8 +162,8 @@ namespace Flow.Plugin.VSCodeWorkspaces
                     }
                     catch (Win32Exception)
                     {
-                        var name = $"Plugin: {_context.CurrentPluginMetadata.Name}";
-                        const string msg = "Can't Open this file";
+                        var name = $"{_context.CurrentPluginMetadata.Name}";
+                        string msg = Resources.OpenFail;
                         _context.API.ShowMsg(name, msg, string.Empty);
                     }
                     return false;
@@ -192,6 +199,28 @@ namespace Flow.Plugin.VSCodeWorkspaces
         public string GetTranslatedPluginDescription()
         {
             return Resources.PluginDescription;
+        }
+
+        public List<Result> LoadContextMenus(Result selectedResult)
+        {
+            List<Result> results = new();
+            if (selectedResult.ContextData is VSCodeWorkspace ws && ws.TypeWorkspace == TypeWorkspace.Local)
+            {
+                results.Add(new Result
+                {
+                    Title = Resources.OpenFolder,
+                    SubTitle = Resources.OpenFolderSubTitle,
+                    Icon = ws.VSCodeInstance.WorkspaceIcon,
+                    TitleToolTip = Resources.OpenFolderSubTitle,
+                    Action = c =>
+                    {
+                        _context.API.OpenDirectory(SystemPath.RealPath(ws.RelativePath));
+                        return true;
+                    },
+                    ContextData = ws,
+                });
+            }
+            return results;
         }
     }
 }

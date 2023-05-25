@@ -141,6 +141,15 @@
   <data name="In" xml:space="preserve">
     <value>位于</value>
   </data>
+  <data name="OpenFail" xml:space="preserve">
+    <value>无法打开工作区</value>
+  </data>
+  <data name="OpenFolder" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="OpenFolderSubTitle" xml:space="preserve">
+    <value>在默认文件管理器中打开文件夹</value>
+  </data>
   <data name="PluginDescription" xml:space="preserve">
     <value>在 VS Code 中打开最近使用的工作区、远程计算机(SSH 或 Codespaces)和容器。</value>
   </data>
