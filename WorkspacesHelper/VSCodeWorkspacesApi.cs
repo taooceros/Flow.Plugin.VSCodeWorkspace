@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Flow.Plugin.VSCodeWorkspaces.VSCodeHelper;
 using Microsoft.Data.Sqlite;
 
@@ -49,6 +50,8 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
             return null;
         }
+
+        public Regex workspaceLabelParser = new Regex("(.+?)(\\[.+\\])");
 
         public List<VSCodeWorkspace> Workspaces
         {
@@ -99,7 +102,8 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                     }
 
                     // for vscode v1.64.0 or later
-                    using var connection = new SqliteConnection($"Data Source={vscodeInstance.AppData}/User/globalStorage/state.vscdb;mode=readonly;cache=shared;");
+                    using var connection = new SqliteConnection(
+                        $"Data Source={vscodeInstance.AppData}/User/globalStorage/state.vscdb;mode=readonly;cache=shared;");
                     connection.Open();
                     var command = connection.CreateCommand();
                     command.CommandText = "SELECT value FROM ItemTable where key = 'history.recentlyOpenedPathsList'";
@@ -115,13 +119,22 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                             if (!entry.TryGetProperty("folderUri", out var folderUri))
                                 continue;
                             var workspaceUri = folderUri.GetString();
-                            var uri = ParseVSCodeUri(workspaceUri, vscodeInstance);
-                            if (uri == null)
+                            var workspace = ParseVSCodeUri(workspaceUri, vscodeInstance);
+                            if (workspace == null)
                                 continue;
-                            results.Add(uri);
+
+                            if (entry.TryGetProperty("label", out var label))
+                            {
+                                var labelString = label.GetString()!;
+                                var matchGroup = workspaceLabelParser.Match(labelString);
+                                workspace = workspace with {
+                                    Lable = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}"
+                                };
+                            }
+
+                            results.Add(workspace);
                         }
                     }
-
                 }
 
                 return results;

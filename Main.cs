@@ -41,7 +41,8 @@ namespace Flow.Plugin.VSCodeWorkspaces
             // User defined extra workspaces
             if (defaultInstalce != null)
             {
-                workspaces.AddRange(_settings.CustomWorkspaces.Select(uri => VSCodeWorkspacesApi.ParseVSCodeUri(uri, defaultInstalce)));
+                workspaces.AddRange(_settings.CustomWorkspaces.Select(uri =>
+                    VSCodeWorkspacesApi.ParseVSCodeUri(uri, defaultInstalce)));
             }
 
             // Search opened workspaces
@@ -84,7 +85,8 @@ namespace Flow.Plugin.VSCodeWorkspaces
                                 {
                                     FileName = a.VSCodeInstance.ExecutablePath,
                                     UseShellExecute = true,
-                                    Arguments = $"--new-window --enable-proposed-api ms-vscode-remote.remote-ssh --remote ssh-remote+{((char)34) + a.Host + ((char)34)}",
+                                    Arguments =
+                                        $"--new-window --enable-proposed-api ms-vscode-remote.remote-ssh --remote ssh-remote+{((char)34) + a.Host + ((char)34)}",
                                     WindowStyle = ProcessWindowStyle.Hidden,
                                 };
                                 Process.Start(process);
@@ -106,7 +108,8 @@ namespace Flow.Plugin.VSCodeWorkspaces
                 });
             }
 
-            if (query.ActionKeyword == string.Empty || (query.ActionKeyword != string.Empty && query.Search != string.Empty))
+            if (query.ActionKeyword == string.Empty ||
+                (query.ActionKeyword != string.Empty && query.Search != string.Empty))
             {
                 results = results.Where(r =>
                 {
@@ -126,10 +129,13 @@ namespace Flow.Plugin.VSCodeWorkspaces
 
             if (ws.TypeWorkspace != TypeWorkspace.Local)
             {
-                title = $"{title}{(ws.ExtraInfo != null ? $" - {ws.ExtraInfo}" : string.Empty)} ({typeWorkspace})";
+                title = ws.Lable != null
+                    ? $"{ws.Lable}"
+                    : $"{title}{(ws.ExtraInfo != null ? $" - {ws.ExtraInfo}" : string.Empty)} ({typeWorkspace})";
             }
 
-            var tooltip = $"{Resources.Workspace}{(ws.TypeWorkspace != TypeWorkspace.Local ? $" {Resources.In} {typeWorkspace}" : string.Empty)}: {SystemPath.RealPath(ws.RelativePath)}";
+            var tooltip =
+                $"{Resources.Workspace}{(ws.TypeWorkspace != TypeWorkspace.Local ? $" {Resources.In} {typeWorkspace}" : string.Empty)}: {SystemPath.RealPath(ws.RelativePath)}";
 
             return new Result
             {
@@ -166,6 +172,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
                         string msg = Resources.OpenFail;
                         _context.API.ShowMsg(name, msg, string.Empty);
                     }
+
                     return false;
                 },
                 ContextData = ws,
@@ -220,6 +227,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
                     ContextData = ws,
                 });
             }
+
             return results;
         }
     }
