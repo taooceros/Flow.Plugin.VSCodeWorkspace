@@ -15,6 +15,8 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
         public PathString RelativePath { get; init; }
 
         public PathString FolderName { get; init; }
+        
+        public string Lable { get; init; }
 
         public string ExtraInfo { get; init; }
 
