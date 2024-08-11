@@ -64,8 +64,8 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
         {
             if (_systemPath == Environment.GetEnvironmentVariable("PATH"))
                 return;
-            
-            
+
+
             Instances = new List<VSCodeInstance>();
 
             _systemPath = Environment.GetEnvironmentVariable("PATH") ?? "";
@@ -77,17 +77,24 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
             {
                 if (!Directory.Exists(path))
                     continue;
-                
-                var files = Directory.EnumerateFiles(path).Where(x =>
+
+                var newPath = path;
+                if (!Path.GetFileName(path).Equals("bin", StringComparison.OrdinalIgnoreCase))
+                    newPath = Path.Combine(path, "bin");
+
+                if (!Directory.Exists(newPath))
+                    continue;
+
+                var files = Directory.EnumerateFiles(newPath).Where(x =>
                     (x.Contains("code", StringComparison.OrdinalIgnoreCase) ||
                      x.Contains("codium", StringComparison.OrdinalIgnoreCase))
                     && !x.EndsWith(".cmd", StringComparison.OrdinalIgnoreCase)).ToArray();
 
-                var iconPath = Path.GetDirectoryName(path);
+                var iconPath = Path.GetDirectoryName(newPath);
 
                 if (files.Length <= 0)
                     continue;
-                        
+
                 var file = files[0];
                 var version = string.Empty;
 
@@ -119,8 +126,8 @@ namespace Flow.Plugin.VSCodeWorkspaces.VSCodeHelper
 
                 if (version == string.Empty)
                     continue;
-                        
-                        
+
+
                 var portableData = Path.Join(iconPath, "data");
                 instance.AppData = Directory.Exists(portableData) ? Path.Join(portableData, "user-data") : Path.Combine(_userAppDataPath, version);
                 var iconVSCode = Path.Join(iconPath, $"{version}.exe");
