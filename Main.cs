@@ -19,7 +19,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
 
     public class Main : IPlugin, IPluginI18n, ISettingProvider, IContextMenu
     {
-        internal static PluginInitContext _context { get; private set; }
+        internal static PluginInitContext Context { get; private set; }
 
         private static Settings _settings;
 
@@ -27,7 +27,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
 
         public string Description => GetTranslatedPluginDescription();
 
-        private VSCodeInstance defaultInstalce;
+        private VSCodeInstance _defaultInstance;
 
         private readonly VSCodeWorkspacesApi _workspacesApi = new();
 
@@ -39,10 +39,10 @@ namespace Flow.Plugin.VSCodeWorkspaces
             var workspaces = new List<VsCodeWorkspace>();
 
             // User defined extra workspaces
-            if (defaultInstalce != null)
+            if (_defaultInstance != null)
             {
                 workspaces.AddRange(_settings.CustomWorkspaces.Select(uri =>
-                    VSCodeWorkspacesApi.ParseVSCodeUri(uri, defaultInstalce)));
+                    VSCodeWorkspacesApi.ParseVSCodeUri(uri, _defaultInstance)));
             }
 
             // Search opened workspaces
@@ -95,9 +95,9 @@ namespace Flow.Plugin.VSCodeWorkspaces
                             }
                             catch (Win32Exception)
                             {
-                                var name = $"{_context.CurrentPluginMetadata.Name}";
+                                var name = $"{Context.CurrentPluginMetadata.Name}";
                                 string msg = Resources.OpenFail;
-                                _context.API.ShowMsg(name, msg, string.Empty);
+                                Context.API.ShowMsg(name, msg, string.Empty);
                                 hide = false;
                             }
 
@@ -113,7 +113,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
             {
                 results = results.Where(r =>
                 {
-                    r.Score = _context.API.FuzzySearch(query.Search, r.Title).Score;
+                    r.Score = Context.API.FuzzySearch(query.Search, r.Title).Score;
                     return r.Score > 0;
                 }).ToList();
             }
@@ -129,8 +129,8 @@ namespace Flow.Plugin.VSCodeWorkspaces
 
             if (ws.WorkspaceLocation != WorkspaceLocation.Local)
             {
-                title = ws.Lable != null
-                    ? $"{ws.Lable}"
+                title = ws.Label != null
+                    ? $"{ws.Label}"
                     : $"{title}{(ws.ExtraInfo != null ? $" - {ws.ExtraInfo}" : string.Empty)} ({typeWorkspace})";
             }
 
@@ -150,7 +150,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
                         var modifierKeys = c.SpecialKeyState.ToModifierKeys();
                         if (modifierKeys == System.Windows.Input.ModifierKeys.Control)
                         {
-                            _context.API.OpenDirectory(SystemPath.RealPath(ws.RelativePath));
+                            Context.API.OpenDirectory(SystemPath.RealPath(ws.RelativePath));
                             return true;
                         }
 
@@ -172,9 +172,9 @@ namespace Flow.Plugin.VSCodeWorkspaces
                     }
                     catch (Win32Exception)
                     {
-                        var name = $"{_context.CurrentPluginMetadata.Name}";
+                        var name = $"{Context.CurrentPluginMetadata.Name}";
                         string msg = Resources.OpenFail;
-                        _context.API.ShowMsg(name, msg, string.Empty);
+                        Context.API.ShowMsg(name, msg, string.Empty);
                     }
 
                     return false;
@@ -185,17 +185,17 @@ namespace Flow.Plugin.VSCodeWorkspaces
 
         public void Init(PluginInitContext context)
         {
-            _context = context;
+            Context = context;
             _settings = context.API.LoadSettingJsonStorage<Settings>();
 
             VSCodeInstances.LoadVSCodeInstances();
 
             // Prefer stable version, or the first one we got
-            defaultInstalce = VSCodeInstances.Instances.Find(e => e.VSCodeVersion == VSCodeVersion.Stable) ??
+            _defaultInstance = VSCodeInstances.Instances.Find(e => e.VSCodeVersion == VSCodeVersion.Stable) ??
                               VSCodeInstances.Instances.FirstOrDefault();
         }
 
-        public Control CreateSettingPanel() => new SettingsView(_context, _settings);
+        public Control CreateSettingPanel() => new SettingsView(Context, _settings);
 
         public void OnCultureInfoChanged(CultureInfo newCulture)
         {
@@ -225,7 +225,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
                     TitleToolTip = Resources.OpenFolderSubTitle,
                     Action = c =>
                     {
-                        _context.API.OpenDirectory(SystemPath.RealPath(ws.RelativePath));
+                        Context.API.OpenDirectory(SystemPath.RealPath(ws.RelativePath));
                         return true;
                     },
                     ContextData = ws,

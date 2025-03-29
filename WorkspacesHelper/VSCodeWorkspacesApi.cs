@@ -96,7 +96,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                         catch (Exception ex)
                         {
                             var message = $"Failed to deserialize ${vscodeStorage}";
-                            Main._context.API.LogException("VSCodeWorkspaceApi", message, ex);
+                            Main.Context.API.LogException("VSCodeWorkspaceApi", message, ex);
                         }
                     }
 
@@ -149,7 +149,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                     var matchGroup = WorkspaceLabelParser.Match(labelString);
                     workspace = workspace with
                     {
-                        Lable = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}",
+                        Label = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}",
                         WorkspaceType = WorkspaceType.Workspace
                     };
                 }
@@ -176,7 +176,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                 var matchGroup = WorkspaceLabelParser.Match(labelString);
                 workspace = workspace with
                 {
-                    Lable = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}",
+                    Label = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}",
                     WorkspaceType = WorkspaceType.Workspace
                 };
             }
