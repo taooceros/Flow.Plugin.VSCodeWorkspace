@@ -18,7 +18,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
         private static readonly Regex DevContainerWorkspace = new Regex(@"^vscode-remote://dev-container\+(.+?(?=\/))(.+)$", RegexOptions.Compiled);
 
-        public static (TypeWorkspace? TypeWorkspace, string MachineName, string Path) GetTypeWorkspace(string uri)
+        public static (WorkspaceLocation? workspaceLocation, string MachineName, string Path) GetTypeWorkspace(string uri)
         {
             if (LocalWorkspace.IsMatch(uri))
             {
@@ -26,7 +26,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
                 if (match.Groups.Count > 1)
                 {
-                    return (TypeWorkspace.Local, null, match.Groups[1].Value);
+                    return (WorkspaceLocation.Local, null, match.Groups[1].Value);
                 }
             }
             else if (RemoteSSHWorkspace.IsMatch(uri))
@@ -35,7 +35,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
                 if (match.Groups.Count > 1)
                 {
-                    return (TypeWorkspace.RemoteSSH, match.Groups[1].Value, match.Groups[2].Value);
+                    return (WorkspaceLocation.RemoteSSH, match.Groups[1].Value, match.Groups[2].Value);
                 }
             }
             else if (RemoteWSLWorkspace.IsMatch(uri))
@@ -44,7 +44,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
                 if (match.Groups.Count > 1)
                 {
-                    return (TypeWorkspace.RemoteWSL, match.Groups[1].Value, match.Groups[2].Value);
+                    return (WorkspaceLocation.RemoteWSL, match.Groups[1].Value, match.Groups[2].Value);
                 }
             }
             else if (CodespacesWorkspace.IsMatch(uri))
@@ -53,7 +53,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
                 if (match.Groups.Count > 1)
                 {
-                    return (TypeWorkspace.Codespaces, null, match.Groups[2].Value);
+                    return (WorkspaceLocation.Codespaces, null, match.Groups[2].Value);
                 }
             }
             else if (DevContainerWorkspace.IsMatch(uri))
@@ -62,7 +62,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
                 if (match.Groups.Count > 1)
                 {
-                    return (TypeWorkspace.DevContainer, null, match.Groups[2].Value);
+                    return (WorkspaceLocation.DevContainer, null, match.Groups[2].Value);
                 }
             }
 

@@ -36,7 +36,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
         public List<Result> Query(Query query)
         {
             var results = new List<Result>();
-            var workspaces = new List<VSCodeWorkspace>();
+            var workspaces = new List<VsCodeWorkspace>();
 
             // User defined extra workspaces
             if (defaultInstalce != null)
@@ -122,12 +122,12 @@ namespace Flow.Plugin.VSCodeWorkspaces
             return results;
         }
 
-        private Result CreateWorkspaceResult(VSCodeWorkspace ws)
+        private static Result CreateWorkspaceResult(VsCodeWorkspace ws)
         {
             var title = $"{ws.FolderName}";
             var typeWorkspace = ws.WorkspaceTypeToString();
 
-            if (ws.TypeWorkspace != TypeWorkspace.Local)
+            if (ws.WorkspaceLocation != WorkspaceLocation.Local)
             {
                 title = ws.Lable != null
                     ? $"{ws.Lable}"
@@ -135,7 +135,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
             }
 
             var tooltip =
-                $"{Resources.Workspace}{(ws.TypeWorkspace != TypeWorkspace.Local ? $" {Resources.In} {typeWorkspace}" : string.Empty)}: {SystemPath.RealPath(ws.RelativePath)}";
+                $"{Resources.Workspace}{(ws.WorkspaceLocation != WorkspaceLocation.Local ? $" {Resources.In} {typeWorkspace}" : string.Empty)}: {SystemPath.RealPath(ws.RelativePath)}";
 
             return new Result
             {
@@ -160,7 +160,11 @@ namespace Flow.Plugin.VSCodeWorkspaces
                             UseShellExecute = true,
                             WindowStyle = ProcessWindowStyle.Hidden,
                         };
-                        process.ArgumentList.Add("--folder-uri");
+
+                        process.ArgumentList.Add(ws.WorkspaceType == WorkspaceType.Workspace
+                            ? "--file-uri"
+                            : "--folder-uri");
+
                         process.ArgumentList.Add(ws.Path);
 
                         Process.Start(process);
@@ -211,7 +215,7 @@ namespace Flow.Plugin.VSCodeWorkspaces
         public List<Result> LoadContextMenus(Result selectedResult)
         {
             List<Result> results = new();
-            if (selectedResult.ContextData is VSCodeWorkspace ws && ws.TypeWorkspace == TypeWorkspace.Local)
+            if (selectedResult.ContextData is VsCodeWorkspace ws && ws.WorkspaceLocation == WorkspaceLocation.Local)
             {
                 results.Add(new Result
                 {

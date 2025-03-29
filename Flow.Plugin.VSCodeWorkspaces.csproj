@@ -7,7 +7,7 @@
 		<AssemblyName>Flow.Plugin.VSCodeWorkspaces</AssemblyName>
 		<OutputType>Library</OutputType>
 		<Version>1.0</Version>
-		<useWPF>true</useWPF>
+		<UseWpf>true</UseWpf>
 		<Platforms>x64</Platforms>
 		<AppendRuntimeIdentifierToOutputPath>False</AppendRuntimeIdentifierToOutputPath>
 		<LangVersion>latest</LangVersion>

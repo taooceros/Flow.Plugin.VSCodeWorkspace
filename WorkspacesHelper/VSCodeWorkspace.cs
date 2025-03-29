@@ -8,7 +8,7 @@ using Flow.Plugin.VSCodeWorkspaces.VSCodeHelper;
 
 namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 {
-    public record VSCodeWorkspace
+    public record VsCodeWorkspace
     {
         public PathString Path { get; init; }
 
@@ -20,26 +20,28 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
 
         public string ExtraInfo { get; init; }
 
-        public TypeWorkspace TypeWorkspace { get; init; }
+        public WorkspaceLocation WorkspaceLocation { get; init; }
+        
+        public WorkspaceType WorkspaceType { get; init; }
 
         public VSCodeInstance VSCodeInstance { get; init; }
 
         public string WorkspaceTypeToString()
         {
-            return TypeWorkspace switch
+            return WorkspaceLocation switch
             {
-                TypeWorkspace.Local => Resources.TypeWorkspaceLocal,
-                TypeWorkspace.Codespaces => "Codespaces",
-                TypeWorkspace.RemoteContainers => Resources.TypeWorkspaceContainer,
-                TypeWorkspace.RemoteSSH => "SSH",
-                TypeWorkspace.RemoteWSL => "WSL",
-                TypeWorkspace.DevContainer => Resources.TypeWorkspaceDevContainer,
+                WorkspaceLocation.Local => Resources.TypeWorkspaceLocal,
+                WorkspaceLocation.Codespaces => "Codespaces",
+                WorkspaceLocation.RemoteContainers => Resources.TypeWorkspaceContainer,
+                WorkspaceLocation.RemoteSSH => "SSH",
+                WorkspaceLocation.RemoteWSL => "WSL",
+                WorkspaceLocation.DevContainer => Resources.TypeWorkspaceDevContainer,
                 _ => string.Empty
             };
         }
     }
 
-    public enum TypeWorkspace
+    public enum WorkspaceLocation
     {
         Local = 1,
         Codespaces = 2,
@@ -47,5 +49,11 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
         RemoteSSH = 4,
         RemoteContainers = 5,
         DevContainer = 6,
+    }
+
+    public enum WorkspaceType
+    {
+        Folder = 1,
+        Workspace = 2,
     }
 }
