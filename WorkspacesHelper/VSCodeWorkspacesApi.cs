@@ -9,6 +9,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Flow.Plugin.VSCodeWorkspaces.VSCodeHelper;
+using JetBrains.Annotations;
 using Microsoft.Data.Sqlite;
 
 namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
@@ -19,45 +20,43 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
         {
         }
 
-        public static VSCodeWorkspace ParseVSCodeUri(string uri, VSCodeInstance vscodeInstance)
+        public static VsCodeWorkspace ParseVSCodeUri(string uri, VSCodeInstance vscodeInstance)
         {
-            if (uri != null && uri is string)
+            if (uri is not null)
             {
-                string unescapeUri = Uri.UnescapeDataString(uri);
+                var unescapeUri = Uri.UnescapeDataString(uri);
                 var typeWorkspace = WorkspacesHelper.ParseVSCodeUri.GetTypeWorkspace(unescapeUri);
-                if (typeWorkspace.TypeWorkspace.HasValue)
+                if (!typeWorkspace.workspaceLocation.HasValue) return null;
+                var folderName = Path.GetFileName(unescapeUri);
+
+                // Check we haven't returned '' if we have a path like C:\
+                if (string.IsNullOrEmpty(folderName))
                 {
-                    var folderName = Path.GetFileName(unescapeUri);
-
-                    // Check we haven't returned '' if we have a path like C:\
-                    if (string.IsNullOrEmpty(folderName))
-                    {
-                        DirectoryInfo dirInfo = new DirectoryInfo(unescapeUri);
-                        folderName = dirInfo.Name.TrimEnd(':');
-                    }
-
-                    return new VSCodeWorkspace()
-                    {
-                        Path = unescapeUri,
-                        RelativePath = typeWorkspace.Path,
-                        FolderName = folderName,
-                        ExtraInfo = typeWorkspace.MachineName,
-                        TypeWorkspace = typeWorkspace.TypeWorkspace.Value,
-                        VSCodeInstance = vscodeInstance,
-                    };
+                    DirectoryInfo dirInfo = new DirectoryInfo(unescapeUri);
+                    folderName = dirInfo.Name.TrimEnd(':');
                 }
+
+                return new VsCodeWorkspace()
+                {
+                    Path = unescapeUri,
+                    RelativePath = typeWorkspace.Path,
+                    FolderName = folderName,
+                    ExtraInfo = typeWorkspace.MachineName,
+                    WorkspaceLocation = typeWorkspace.workspaceLocation.Value,
+                    VSCodeInstance = vscodeInstance,
+                };
             }
 
             return null;
         }
 
-        public Regex workspaceLabelParser = new Regex("(.+?)(\\[.+\\])");
+        public readonly Regex WorkspaceLabelParser = new Regex("(.+?)(\\[.+\\])");
 
-        public List<VSCodeWorkspace> Workspaces
+        public List<VsCodeWorkspace> Workspaces
         {
             get
             {
-                var results = new List<VSCodeWorkspace>();
+                var results = new List<VsCodeWorkspace>();
 
                 foreach (var vscodeInstance in VSCodeInstances.Instances)
                 {
@@ -81,7 +80,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                                         vscodeStorageFile.OpenedPathsList.Workspaces3
                                             .Select(workspaceUri => ParseVSCodeUri(workspaceUri, vscodeInstance))
                                             .Where(uri => uri != null)
-                                            .Select(uri => (VSCodeWorkspace)uri));
+                                            .Select(uri => (VsCodeWorkspace)uri));
                                 }
 
                                 // vscode v1.55.0 or later
@@ -97,7 +96,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                         catch (Exception ex)
                         {
                             var message = $"Failed to deserialize ${vscodeStorage}";
-                            Main._context.API.LogException("VSCodeWorkspaceApi", message, ex);
+                            Main.Context.API.LogException("VSCodeWorkspaceApi", message, ex);
                         }
                     }
 
@@ -116,29 +115,73 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                             continue;
                         foreach (var entry in entries.EnumerateArray())
                         {
-                            if (!entry.TryGetProperty("folderUri", out var folderUri))
-                                continue;
-                            var workspaceUri = folderUri.GetString();
-                            var workspace = ParseVSCodeUri(workspaceUri, vscodeInstance);
-                            if (workspace == null)
-                                continue;
-
-                            if (entry.TryGetProperty("label", out var label))
+                            if (entry.TryGetProperty("folderUri", out var folderUri) &&
+                                ParseFolderEntry(folderUri, vscodeInstance, entry) is { } folderWorkspace)
                             {
-                                var labelString = label.GetString()!;
-                                var matchGroup = workspaceLabelParser.Match(labelString);
-                                workspace = workspace with {
-                                    Lable = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}"
-                                };
+                                results.Add(folderWorkspace);
                             }
-
-                            results.Add(workspace);
+                            else if (entry.TryGetProperty("workspace", out var workspaceInfo) &&
+                                     ParseWorkspaceEntry(workspaceInfo, vscodeInstance, entry) is { } workspace)
+                            {
+                                results.Add(workspace);
+                            }
                         }
                     }
                 }
 
                 return results;
             }
+        }
+
+        [CanBeNull]
+        private VsCodeWorkspace ParseWorkspaceEntry(JsonElement workspaceInfo, VSCodeInstance vscodeInstance,
+            JsonElement entry)
+        {
+            if (workspaceInfo.TryGetProperty("configPath", out var configPath))
+            {
+                var workspace = ParseVSCodeUri(configPath.GetString(), vscodeInstance);
+                if (workspace == null)
+                    return null;
+
+                if (entry.TryGetProperty("label", out var label))
+                {
+                    var labelString = label.GetString()!;
+                    var matchGroup = WorkspaceLabelParser.Match(labelString);
+                    workspace = workspace with
+                    {
+                        Label = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}",
+                        WorkspaceType = WorkspaceType.Workspace
+                    };
+                }
+
+                return workspace;
+            }
+
+            return null;
+        }
+
+
+        [CanBeNull]
+        private VsCodeWorkspace ParseFolderEntry(JsonElement folderUri, VSCodeInstance vscodeInstance,
+            JsonElement entry)
+        {
+            var workspaceUri = folderUri.GetString();
+            var workspace = ParseVSCodeUri(workspaceUri, vscodeInstance);
+            if (workspace == null)
+                return null;
+
+            if (entry.TryGetProperty("label", out var label))
+            {
+                var labelString = label.GetString()!;
+                var matchGroup = WorkspaceLabelParser.Match(labelString);
+                workspace = workspace with
+                {
+                    Label = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}",
+                    WorkspaceType = WorkspaceType.Workspace
+                };
+            }
+
+            return workspace;
         }
     }
 }

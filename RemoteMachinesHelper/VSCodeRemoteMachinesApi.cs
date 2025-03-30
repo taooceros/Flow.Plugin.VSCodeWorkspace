@@ -61,7 +61,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.RemoteMachinesHelper
                         catch (Exception ex)
                         {
                             var message = $"Failed to deserialize ${vscode_settings}";
-                            Main._context.API.LogException("VSCodeWorkSpaces", message, ex);
+                            Main.Context.API.LogException("VSCodeWorkSpaces", message, ex);
                         }
                     }
                 }
