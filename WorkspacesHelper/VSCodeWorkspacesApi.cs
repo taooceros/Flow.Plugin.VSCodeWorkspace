@@ -177,7 +177,7 @@ namespace Flow.Plugin.VSCodeWorkspaces.WorkspacesHelper
                 workspace = workspace with
                 {
                     Label = $"{matchGroup.Groups[2]} {matchGroup.Groups[1]}",
-                    WorkspaceType = WorkspaceType.Workspace
+                    WorkspaceType = WorkspaceType.Folder
                 };
             }
 
